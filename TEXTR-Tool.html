@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TEXTR – Typographic Art Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Tomorrow:ital,wght@0,400;0,500;1,400;1,500;1,700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#1c1c1c;--panel:#242424;--panel2:#2e2e2e;--border:#383838;--text:#c8c8c8;--text2:#777;--accent:#4da6ff;--input:#181818}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Tomorrow',monospace;font-size:11px}
+#app{display:flex;flex-direction:column;height:100vh}
+#toolbar{height:34px;background:#161616;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 10px;gap:2px;flex-shrink:0}
+#toolbar .logo{color:var(--accent);font-weight:500;font-size:12px;letter-spacing:3px;margin-right:12px}
+.tb{background:none;border:none;color:var(--text2);font-size:10px;padding:3px 8px;cursor:pointer;border-radius:2px;font-family:inherit;letter-spacing:.5px}
+.tb:hover{background:var(--panel2);color:var(--text)}
+#main{display:flex;flex:1;overflow:hidden}
+#canvas-area{flex:1;background:#2a2a2a;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+#canvas-wrap{position:relative;box-shadow:0 4px 40px rgba(0,0,0,.7)}
+canvas#C{display:block}
+#zoom-bar{position:absolute;bottom:10px;right:10px;display:flex;gap:3px}
+.zbtn{background:rgba(0,0,0,.55);border:1px solid var(--border);color:var(--text2);font-size:10px;padding:3px 7px;cursor:pointer;border-radius:2px;font-family:inherit}
+#panel{width:272px;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+#tabs{display:flex;background:#161616;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:8px 2px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);font-size:9px;letter-spacing:1px;cursor:pointer;font-family:inherit}
+.tab.on{color:var(--text);border-bottom-color:var(--accent)}
+#pcontent{flex:1;overflow-y:auto;overflow-x:hidden}
+#pcontent::-webkit-scrollbar{width:3px}
+#pcontent::-webkit-scrollbar-thumb{background:#444}
+.sec{border-bottom:1px solid var(--border);padding:9px 11px}
+.sh{color:var(--text2);font-size:9px;letter-spacing:1px;margin-bottom:7px;text-transform:uppercase}
+.lbl{color:var(--text2);font-size:9px;display:block;margin-bottom:3px;letter-spacing:.3px}
+input[type=text],input[type=number],select,textarea{width:100%;background:var(--input);border:1px solid var(--border);color:var(--text);padding:4px 6px;font-size:10px;border-radius:2px;font-family:inherit;outline:none}
+input:focus,select:focus{border-color:var(--accent)}
+.sr{display:flex;align-items:center;gap:5px;margin-bottom:5px}
+.sr .lbl{min-width:88px;margin:0;flex-shrink:0}
+.sr input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:#3a3a3a;border-radius:2px;outline:none;cursor:pointer}
+.sr input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:var(--accent);cursor:pointer}
+.sr .v{min-width:34px;text-align:right;color:var(--text);font-size:10px}
+.cr{display:flex;align-items:center;gap:5px;margin-bottom:5px}
+.cr .lbl{flex:1;margin:0}
+.csw{width:22px;height:22px;border-radius:2px;border:1px solid var(--border);overflow:hidden;cursor:pointer;flex-shrink:0;position:relative}
+.csw input[type=color]{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);opacity:0;cursor:pointer}
+.chex{width:64px!important;font-size:9px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.tgr{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.tg{position:relative;width:30px;height:15px;flex-shrink:0}
+.tg input{opacity:0;width:0;height:0}
+.tgs{position:absolute;inset:0;background:var(--border);border-radius:8px;cursor:pointer;transition:.2s}
+.tgs:before{content:'';position:absolute;width:11px;height:11px;left:2px;top:2px;background:#555;border-radius:50%;transition:.2s}
+.tg input:checked+.tgs{background:var(--accent)}
+.tg input:checked+.tgs:before{transform:translateX(15px);background:#000}
+.btn{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:4px 9px;cursor:pointer;border-radius:2px;font-family:inherit;font-size:10px}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btnp{background:var(--accent);border:1px solid var(--accent);color:#000;padding:4px 9px;cursor:pointer;border-radius:2px;font-family:inherit;font-size:10px;font-weight:500;width:100%}
+.btnp:hover{background:#6dbfff}
+.subtabs{display:flex;border:1px solid var(--border);border-radius:2px;overflow:hidden;margin-bottom:7px}
+.stab{flex:1;padding:4px;background:none;border:none;color:var(--text2);font-size:9px;cursor:pointer;font-family:inherit;letter-spacing:.5px}
+.stab.on{background:var(--accent);color:#000}
+.pw{background:var(--input);border:1px solid var(--border);border-radius:2px;height:38px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;font-size:22px;overflow:hidden}
+.pbar{background:var(--input);border-radius:2px;height:5px;overflow:hidden;margin-top:4px;display:none}
+.pbf{height:100%;background:var(--accent);width:0%;transition:width .08s}
+#elog{font-size:9px;color:var(--text2);margin-top:4px;min-height:28px;line-height:1.5}
+#sbar{height:22px;background:#161616;border-top:1px solid var(--border);display:flex;align-items:center;padding:0 10px;gap:14px;flex-shrink:0}
+.si{color:var(--text2);font-size:9px}
+/* Audio reactive panel */
+.av-wrap{border-radius:6px;overflow:hidden;background:linear-gradient(145deg,#12121a 0%,#0a0a0e 50%,#101018 100%);border:1px solid #2a2a34;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 4px 20px rgba(0,0,0,.35);margin-bottom:8px}
+#vizCv{display:block;width:100%;height:52px;vertical-align:middle}
+.av-bands{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
+.av-band{background:linear-gradient(180deg,#1a1a22 0%,#14141a 100%);border:1px solid #2e2e38;border-radius:5px;padding:7px 8px 8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.av-band .av-lbl{font-size:7px;letter-spacing:1.2px;color:#5c5c6a;margin-bottom:5px;font-weight:500}
+.av-band .av-num{font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-0.5px;margin-bottom:6px;line-height:1}
+.av-band.bass .av-num{color:#ff7b9c;text-shadow:0 0 18px rgba(255,90,130,.25)}
+.av-band.mid .av-num{color:#ffc56a;text-shadow:0 0 18px rgba(255,180,80,.2)}
+.av-band.high .av-num{color:#6ee7ff;text-shadow:0 0 18px rgba(80,220,255,.22)}
+.av-meter{height:4px;border-radius:99px;background:#0c0c10;overflow:hidden;position:relative}
+.av-meter i{display:block;height:100%;border-radius:99px;transition:width .22s cubic-bezier(.4,0,.2,1),opacity .2s ease}
+.av-band.bass .av-meter i{background:linear-gradient(90deg,#ff4d7d,#ff9ec4);box-shadow:0 0 10px rgba(255,77,125,.45)}
+.av-band.mid .av-meter i{background:linear-gradient(90deg,#ff9f43,#ffe566);box-shadow:0 0 10px rgba(255,180,70,.35)}
+.av-band.high .av-meter i{background:linear-gradient(90deg,#22d3ee,#a5f3fc);box-shadow:0 0 10px rgba(34,211,238,.4)}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="toolbar">
+  <span class="logo">TEXTR</span>
+  <button class="tb" onclick="newProject()">New</button>
+  <button class="tb" onclick="savePreset()">Save Preset</button>
+  <button class="tb" onclick="document.getElementById('pfi').click()">Load Preset</button>
+  <button class="tb" onclick="exportSVG()">SVG Export</button>
+  <button class="tb" onclick="goExport()">Video Export</button>
+  <div style="flex:1"></div>
+  <span class="si" id="fps-disp">-- fps</span>
+</div>
+<div id="main">
+  <div id="canvas-area">
+    <div id="canvas-wrap"><canvas id="C"></canvas></div>
+    <div id="zoom-bar">
+      <button class="zbtn" onclick="doZoom(1.25)">+</button>
+      <button class="zbtn" id="zlbl">100%</button>
+      <button class="zbtn" onclick="doZoom(0.8)">−</button>
+      <button class="zbtn" onclick="fitZoom()">fit</button>
+    </div>
+  </div>
+  <div id="panel">
+    <div id="tabs">
+      <button class="tab on" onclick="switchTab('main',this)">MAIN</button>
+      <button class="tab" onclick="switchTab('text',this)">TEXT</button>
+      <button class="tab" onclick="switchTab('motion',this)">MOTION</button>
+      <button class="tab" onclick="switchTab('export',this)">EXPORT</button>
+    </div>
+    <div id="pcontent">
+
+      <div class="pane" id="pane-main">
+        <div class="sec">
+          <div class="sh">Preset</div>
+          <div style="display:flex;gap:4px;margin-bottom:5px">
+            <select id="presetSel" onchange="applyPreset(this.value)" style="flex:1">
+              <option value="echo">An Echo Of Silence</option>
+              <option value="heart">Heart ♥</option>
+              <option value="storm">Storm Current</option>
+              <option value="bloom">Spiral Bloom</option>
+              <option value="ocean">Ocean Wave</option>
+              <option value="glitch">Glitch Field</option>
+              <option value="radial">Radial Burst</option>
+              <option value="networkDance">Network Dance</option>
+            </select>
+            <button class="btn" onclick="T=0">Restart</button>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="btn" onclick="savePreset()" style="flex:1">Save JSON</button>
+            <button class="btn" onclick="document.getElementById('pfi').click()" style="flex:1">Load JSON</button>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sh">Canvas</div>
+          <div class="g2">
+            <div><label class="lbl">Width</label><input type="number" id="CW" value="800" min="200" max="4096" onchange="resizeCvs()"></div>
+            <div><label class="lbl">Height</label><input type="number" id="CH" value="800" min="200" max="4096" onchange="resizeCvs()"></div>
+          </div>
+          <div class="cr" style="margin-top:5px">
+            <label class="lbl">Background</label>
+            <div class="csw" id="bgSw" style="background:#f5f0e8"><input type="color" id="bgC" value="#f5f0e8" oninput="syncColor('bgC','bgHex','bgSw')"></div>
+            <input type="text" class="chex" id="bgHex" value="#f5f0e8" onchange="hexToColor('bgHex','bgC','bgSw')">
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sh">Playback</div>
+          <div class="tgr"><label class="lbl">Animate</label><label class="tg"><input type="checkbox" id="animOn" checked><span class="tgs"></span></label></div>
+          <div class="sr"><label class="lbl">Speed</label><input type="range" min="0" max="3" step="0.05" id="playSpd" value="1" oninput="sv(this,'playSpdV')"><span class="v" id="playSpdV">1.0</span></div>
+        </div>
+        <div class="sec">
+          <div class="sh">Audio Reactive</div>
+          <button class="btnp" id="audioBtn" onclick="toggleAudio()" style="margin-bottom:8px">🎤 Enable Microphone</button>
+          <div id="audioViz" style="display:none">
+            <div class="av-wrap">
+              <canvas id="vizCv" width="496" height="104"></canvas>
+            </div>
+            <div class="av-bands">
+              <div class="av-band bass">
+                <div class="av-lbl">BASS</div>
+                <div class="av-num" id="bassVal">0</div>
+                <div class="av-meter"><i id="bassBar" style="width:0%"></i></div>
+              </div>
+              <div class="av-band mid">
+                <div class="av-lbl">MID</div>
+                <div class="av-num" id="midVal">0</div>
+                <div class="av-meter"><i id="midBar" style="width:0%"></i></div>
+              </div>
+              <div class="av-band high">
+                <div class="av-lbl">HIGH</div>
+                <div class="av-num" id="highVal">0</div>
+                <div class="av-meter"><i id="highBar" style="width:0%"></i></div>
+              </div>
+            </div>
+            <div class="sh" style="margin-bottom:6px">Map Audio To</div>
+            <div class="tgr"><label class="lbl">Bass → Amplitude</label><label class="tg"><input type="checkbox" id="arAmp" checked><span class="tgs"></span></label></div>
+            <div class="tgr"><label class="lbl">Mid → Speed</label><label class="tg"><input type="checkbox" id="arSpd" checked><span class="tgs"></span></label></div>
+            <div class="tgr"><label class="lbl">High → Font Size</label><label class="tg"><input type="checkbox" id="arSize" checked><span class="tgs"></span></label></div>
+            <div class="tgr"><label class="lbl">Bass → Color Shift</label><label class="tg"><input type="checkbox" id="arColor"><span class="tgs"></span></label></div>
+            <div class="sr"><label class="lbl">Sensitivity</label><input type="range" min="0.5" max="5" step="0.1" id="arSens" value="2" oninput="sv(this,'arSensV')"><span class="v" id="arSensV">2.0</span></div>
+            <div class="sr"><label class="lbl">Smoothing (motion)</label><input type="range" min="0.5" max="0.98" step="0.01" id="arSmooth" value="0.9" oninput="sv(this,'arSmoothV')"><span class="v" id="arSmoothV">0.9</span></div>
+            <div class="sr"><label class="lbl">Spectrum soften</label><input type="range" min="0.55" max="0.98" step="0.01" id="arViz" value="0.9" oninput="sv(this,'arVizV')"><span class="v" id="arVizV">0.9</span></div>
+            <div class="sr"><label class="lbl">Spectrum blur</label><input type="range" min="0" max="0.55" step="0.05" id="arBlur" value="0.35" oninput="sv(this,'arBlurV')"><span class="v" id="arBlurV">0.35</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pane" id="pane-text" style="display:none">
+        <div class="sec">
+          <div class="sh">Font</div>
+          <div class="pw" id="fontPrev" style="font-family:'Tomorrow',serif;font-style:italic">Tomorrow</div>
+          <div class="subtabs">
+            <button class="stab on" onclick="switchFTab('google',this)">Google Fonts</button>
+            <button class="stab" onclick="switchFTab('custom',this)">Custom Font</button>
+          </div>
+          <div id="fgoogle">
+            <label class="lbl">Font Family</label>
+            <select id="fontSel" onchange="changeFont()" style="margin-bottom:5px">
+              <option>Tomorrow</option><option>Bebas Neue</option><option>Playfair Display</option>
+              <option>Montserrat</option><option>Oswald</option><option>Raleway</option>
+              <option>Merriweather</option><option>Nunito</option><option>Lato</option>
+              <option>Poppins</option><option>Fira Code</option><option>Space Mono</option>
+              <option>Anton</option><option>Righteous</option><option>Orbitron</option>
+              <option>Exo 2</option><option>Major Mono Display</option><option>Abril Fatface</option>
+              <option>Staatliches</option>              <option>Unbounded</option>
+              <option>Mona Sans</option>
+            </select>
+            <label class="lbl">Variant</label>
+            <select id="fontVar" onchange="changeFont()">
+              <option value="400normal">400 Regular</option>
+              <option value="400italic">400 Italic</option>
+              <option value="500normal">500 Medium</option>
+              <option value="500italic" selected>500 Italic</option>
+              <option value="700normal">700 Bold</option>
+              <option value="700italic">700 Bold Italic</option>
+            </select>
+          </div>
+          <div id="fcustom" style="display:none">
+            <div id="fdrop" style="border:2px dashed var(--border);border-radius:3px;padding:16px;text-align:center;color:var(--text2);cursor:pointer;font-size:10px" onclick="document.getElementById('ffi').click()" ondragover="event.preventDefault()" ondrop="dropFont(event)">Drop .ttf / .otf / .woff<br>or click to browse</div>
+            <input type="file" id="ffi" accept=".ttf,.otf,.woff,.woff2" style="display:none" onchange="loadFontFile(this)">
+            <div id="fcname" style="color:var(--text2);font-size:9px;margin-top:3px;text-align:center"></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sh">Content</div>
+          <label class="lbl">Text</label>
+          <textarea id="textVal" rows="2" style="resize:vertical;margin-bottom:5px" oninput="dirty()">LOVE IN THE MOOD</textarea>
+          <label class="lbl">Distribute As</label>
+          <select id="distMode" onchange="dirty()" style="margin-bottom:5px">
+            <option value="words">Words</option>
+            <option value="chars">Characters</option>
+            <option value="unique">Unique Letters</option>
+          </select>
+        </div>
+        <div class="sec">
+          <div class="sh">Style</div>
+          <div class="cr">
+            <label class="lbl">Color</label>
+            <div class="csw" id="tcSw" style="background:#0006ff"><input type="color" id="tcC" value="#0006ff" oninput="syncColor('tcC','tcHex','tcSw')"></div>
+            <input type="text" class="chex" id="tcHex" value="#0006ff" onchange="hexToColor('tcHex','tcC','tcSw')">
+          </div>
+          <div class="cr">
+            <label class="lbl">Alt Color</label>
+            <div class="csw" id="ac2Sw" style="background:#ff0066"><input type="color" id="ac2C" value="#ff0066" oninput="syncColor('ac2C','ac2Hex','ac2Sw')"></div>
+            <input type="text" class="chex" id="ac2Hex" value="#ff0066" onchange="hexToColor('ac2Hex','ac2C','ac2Sw')">
+            <label class="tg" style="margin-left:2px"><input type="checkbox" id="useAlt" onchange="dirty()"><span class="tgs"></span></label>
+          </div>
+          <div class="sr"><label class="lbl">Font Size</label><input type="range" min="2" max="60" step=".5" id="fsize" value="10" oninput="sv(this,'fsizeV');dirty()"><span class="v" id="fsizeV">10</span></div>
+          <div class="sr"><label class="lbl">Interval X</label><input type="range" min="4" max="120" id="ivX" value="36" oninput="sv(this,'ivXV');dirty()"><span class="v" id="ivXV">36</span></div>
+          <div class="sr"><label class="lbl">Interval Y</label><input type="range" min="4" max="120" id="ivY" value="36" oninput="sv(this,'ivYV');dirty()"><span class="v" id="ivYV">36</span></div>
+          <div class="sr"><label class="lbl">Opacity</label><input type="range" min=".05" max="1" step=".05" id="opac" value="1" oninput="sv(this,'opacV')"><span class="v" id="opacV">1.0</span></div>
+          <div class="sr"><label class="lbl">Base Rotation</label><input type="range" min="-180" max="180" id="brot" value="0" oninput="sv(this,'brotV')"><span class="v" id="brotV">0</span></div>
+          <div class="sh" style="margin-top:8px">Collision</div>
+          <div class="tgr"><label class="lbl">Same-row spacing</label><label class="tg"><input type="checkbox" id="collOn"><span class="tgs"></span></label></div>
+          <div style="font-size:8px;color:var(--text2);line-height:1.35;margin:-2px 0 6px">Only nudges letters along one grid row so glyphs don’t sit on top of each other. Does not change line spacing.</div>
+          <div class="sr"><label class="lbl">Min gap (design px)</label><input type="range" min="0" max="10" step="0.5" id="collPad" value="2" oninput="sv(this,'collPadV')"><span class="v" id="collPadV">2</span></div>
+        </div>
+      </div>
+
+      <div class="pane" id="pane-motion" style="display:none">
+        <div class="sec">
+          <div class="sh">Position Motion</div>
+          <label class="lbl">Base Mode</label>
+          <select id="baseMode" style="margin-bottom:5px">
+            <option value="noise">Noise</option>
+            <option value="wave">Wave</option>
+            <option value="curl">Curl Noise</option>
+            <option value="spiral">Spiral</option>
+            <option value="radial">Radial</option>
+            <option value="heart">Heart ♥</option>
+            <option value="vortex">Vortex</option>
+            <option value="glitch">Glitch</option>
+            <option value="networkDance">Network Dance</option>
+          </select>
+          <label class="lbl">Amplitude Mode</label>
+          <select id="ampMode" style="margin-bottom:5px">
+            <option value="constant">Constant</option>
+            <option value="ease01" selected>Easing To Side (0 to 1)</option>
+            <option value="ease10">Easing From Side (1 to 0)</option>
+            <option value="center">Center Ease</option>
+            <option value="random">Random Per Cell</option>
+          </select>
+          <label class="lbl">Easing Type</label>
+          <select id="easingType" style="margin-bottom:5px">
+            <option value="circ">Circ Out</option>
+            <option value="sine">Sine Out</option>
+            <option value="quad">Quad Out</option>
+            <option value="linear">Linear</option>
+          </select>
+          <div class="sr"><label class="lbl">Amplitude X</label><input type="range" min="0" max="150" id="ampX" value="29" oninput="sv(this,'ampXV')"><span class="v" id="ampXV">29</span></div>
+          <div class="sr"><label class="lbl">Amplitude Y</label><input type="range" min="0" max="150" id="ampY" value="29" oninput="sv(this,'ampYV')"><span class="v" id="ampYV">29</span></div>
+          <div class="sr"><label class="lbl">Frequency X</label><input type="range" min=".1" max="5" step=".1" id="freqX" value="1" oninput="sv(this,'freqXV')"><span class="v" id="freqXV">1.0</span></div>
+          <div class="sr"><label class="lbl">Frequency Y</label><input type="range" min=".1" max="5" step=".1" id="freqY" value="1" oninput="sv(this,'freqYV')"><span class="v" id="freqYV">1.0</span></div>
+          <div class="sr"><label class="lbl">Motion Speed</label><input type="range" min="0" max=".3" step=".001" id="mspd" value="0.04" oninput="sv(this,'mspdV')"><span class="v" id="mspdV">0.04</span></div>
+          <div class="sr"><label class="lbl">Noise Scale</label><input type="range" min=".5" max="10" step=".1" id="nscale" value="3" oninput="sv(this,'nscaleV')"><span class="v" id="nscaleV">3.0</span></div>
+          <div class="sr"><label class="lbl">Noise Seed</label><input type="range" min="1" max="999" id="nseed" value="248" oninput="sv(this,'nseedV')"><span class="v" id="nseedV">248</span></div>
+        </div>
+        <div class="sec">
+          <div class="sh">Scale Motion</div>
+          <div class="tgr"><label class="lbl">Enable Scale</label><label class="tg"><input type="checkbox" id="scaleOn"><span class="tgs"></span></label></div>
+          <div class="sr"><label class="lbl">Base Scale</label><input type="range" min=".1" max="3" step=".05" id="scaleBase" value="1" oninput="sv(this,'scaleBV')"><span class="v" id="scaleBV">1.0</span></div>
+          <div class="sr"><label class="lbl">Scale Amp</label><input type="range" min="0" max="2" step=".05" id="scaleAmp" value=".5" oninput="sv(this,'scaleAV')"><span class="v" id="scaleAV">0.5</span></div>
+        </div>
+        <div class="sec">
+          <div class="sh">Rotation Motion</div>
+          <div class="tgr"><label class="lbl">Enable Rotation</label><label class="tg"><input type="checkbox" id="rotOn"><span class="tgs"></span></label></div>
+          <div class="sr"><label class="lbl">Rot Amplitude</label><input type="range" min="0" max="360" id="rotAmp" value="30" oninput="sv(this,'rotAmpV')"><span class="v" id="rotAmpV">30</span></div>
+        </div>
+      </div>
+
+      <div class="pane" id="pane-export" style="display:none">
+        <div class="sec">
+          <div class="sh">SVG Export</div>
+          <button class="btnp" onclick="exportSVG()">Export SVG (current frame)</button>
+        </div>
+        <div class="sec">
+          <div class="sh">Video / Image Sequence</div>
+          <div class="sr"><label class="lbl">Duration (s)</label><input type="range" min="1" max="30" id="exDur" value="5" oninput="sv(this,'exDurV')"><span class="v" id="exDurV">5</span></div>
+          <label class="lbl">FPS</label>
+          <select id="exFps" style="margin-bottom:5px"><option value="24">24 fps</option><option value="30" selected>30 fps</option><option value="60">60 fps</option></select>
+          <label class="lbl">Resolution</label>
+          <select id="exRes" style="margin-bottom:5px"><option value="500">500x500</option><option value="800" selected>800x800</option><option value="1080">1080x1080</option><option value="1920">1920x1920</option></select>
+          <label class="lbl">Format</label>
+          <select id="exFmt" style="margin-bottom:8px">
+            <option value="webm">WebM Video</option>
+            <option value="png">PNG Sequence (.zip)</option>
+            <option value="webp">WebP Sequence (.zip)</option>
+          </select>
+          <div class="pbar" id="expBar"><div class="pbf" id="expFill"></div></div>
+          <div id="elog"></div>
+          <button class="btnp" style="margin-top:6px" id="expBtn" onclick="startExport()">Start Export</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div id="sbar">
+  <span class="si" id="sb-sz">800x800</span>
+  <span class="si" id="sb-cells">Cells: 0</span>
+  <span class="si" id="sb-zoom">100%</span>
+  <span class="si" id="sb-t">t: 0.00s</span>
+</div>
+</div>
+
+<input type="file" id="pfi" accept=".json" style="display:none" onchange="loadPresetFile(this)">
+
+<script>
+// ═══════════════ PERLIN NOISE ═══════════════
+const P = new Uint8Array(512);
+function seedP(s) {
+  const p = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) p[i] = i;
+  let r = (s * 1664525 + 1013904223) >>> 0;
+  for (let i = 255; i > 0; i--) {
+    r = (r * 1664525 + 1013904223) >>> 0;
+    const j = r % (i + 1);
+    const tmp = p[i]; p[i] = p[j]; p[j] = tmp;
+  }
+  for (let i = 0; i < 256; i++) P[i] = P[i + 256] = p[i];
+}
+function fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function grad2(h, x, y) {
+  const v = h & 3;
+  const u = v < 2 ? x : y, w = v < 2 ? y : x;
+  return ((h & 1) ? -u : u) + ((h & 2) ? -w : w);
+}
+function noise(x, y) {
+  const xi = Math.floor(x) & 255, yi = Math.floor(y) & 255;
+  const xf = x - Math.floor(x), yf = y - Math.floor(y);
+  const u = fade(xf), v = fade(yf);
+  const aa = P[P[xi] + yi], ab = P[P[xi] + yi + 1];
+  const ba = P[P[xi + 1] + yi], bb = P[P[xi + 1] + yi + 1];
+  return lerp(
+    lerp(grad2(aa, xf, yf), grad2(ba, xf - 1, yf), u),
+    lerp(grad2(ab, xf, yf - 1), grad2(bb, xf - 1, yf - 1), u), v
+  );
+}
+// Multi-octave fBm for rich organic turbulence
+function fbm(x, y) {
+  return noise(x, y) * 0.5 +
+         noise(x * 2.1, y * 2.1) * 0.25 +
+         noise(x * 4.3, y * 4.3) * 0.125 +
+         noise(x * 8.7, y * 8.7) * 0.0625;
+}
+// Curl noise — divergence-free flow field
+function curl(x, y) {
+  const eps = 0.001;
+  const dx = (fbm(x, y + eps) - fbm(x, y - eps)) / (2 * eps);
+  const dy = (fbm(x + eps, y) - fbm(x - eps, y)) / (2 * eps);
+  return { x: -dy, y: dx };
+}
+
+// ═══════════════ STATE ═══════════════
+const G = {
+  cw: 800, ch: 800, bg: '#f5f0e8',
+  text: 'LOVE IN THE MOOD', dist: 'words',
+  font: 'Tomorrow', fvar: '500italic',
+  fsize: 10, ivX: 36, ivY: 36,
+  color: '#0006ff', altColor: '#ff0066', useAlt: false,
+  opacity: 1, brot: 0,
+  mode: 'noise', ampMode: 'ease01', easing: 'circ',
+  ampX: 29, ampY: 29, freqX: 1, freqY: 1,
+  mspd: 0.04, nscale: 3, nseed: 248,
+  scaleOn: false, scaleBase: 1, scaleAmp: 0.5,
+  rotOn: false, rotAmp: 30,
+  playSpd: 1, animOn: true,
+  collisionOn: false, collisionPad: 2,
+  arViz: 0.9, arBlur: 0.35,
+};
+
+let T = 0, lastTS = null, ZL = 1;
+const loadedFonts = new Set(['Tomorrow']);
+const CV = document.getElementById('C');
+const cx = CV.getContext('2d');
+
+// ═══════════════ EASING ═══════════════
+function applyEase(t, type) {
+  t = Math.max(0, Math.min(1, t));
+  if (type === 'circ') return Math.sqrt(1 - (1 - t) * (1 - t));
+  if (type === 'sine') return Math.sin(t * Math.PI * 0.5);
+  if (type === 'quad') return 1 - (1 - t) * (1 - t);
+  return t;
+}
+// From Antlii TEXTR (ease.js) — used by Network Dance / doublesin preset
+function easeInOutExpo01(t) {
+  t = Math.max(0, Math.min(1, t));
+  if (t === 0 || t === 1) return t;
+  const scaledTime = t * 2, scaledTime1 = scaledTime - 1;
+  if (scaledTime < 1) return 0.5 * Math.pow(2, 10 * scaledTime1);
+  return 0.5 * (-Math.pow(2, -10 * scaledTime1) + 2);
+}
+function easeInOutBack01(t) {
+  t = Math.max(0, Math.min(1, t));
+  const magnitude = 1.70158, scaledTime = t * 2, scaledTime2 = scaledTime - 2;
+  const s = magnitude * 1.525;
+  if (scaledTime < 1) return 0.5 * scaledTime * scaledTime * ((s + 1) * scaledTime - s);
+  return 0.5 * (scaledTime2 * scaledTime2 * ((s + 1) * scaledTime2 + s) + 2);
+}
+/** Port of official preset "Network Dance" (doublesin + eased layers). Returns dx, dy in canvas units and posFreq in ~[-0.5,0.5] for scale. */
+function networkDanceOffset(c, r, cols, rows, tOff, ampX, ampY, env, pxScale) {
+  const maxI = Math.max(1, cols * rows - 1);
+  const chain = c + r * cols;
+  const iNorm = chain / maxI;
+  const sinPhase = (cols > 1 ? (c / (cols - 1)) * 2 - 1 : 0) * Math.PI * (-4);
+  const yFreqBase = (rows > 1 ? (r / (rows - 1)) * 2 - 1 : 0) * Math.PI * (-1);
+  const phaseAdd = (iNorm * 2 - 1) * Math.PI * 10;
+  const tau = Math.PI * 2;
+  let freqAdd = Math.sin(tau * tOff * (-2) + phaseAdd);
+  freqAdd = easeInOutBack01((freqAdd + 1) * 0.5) * 2 - 1;
+  const inner = Math.sin(tau * tOff + sinPhase + yFreqBase + freqAdd);
+  const posFreq = easeInOutExpo01((inner + 1) * 0.5) - 0.5;
+  const innerY = Math.cos(tau * tOff * 0.88 + sinPhase * 0.55 + phaseAdd * 0.35 + r * 0.12);
+  const posFreqY = easeInOutExpo01((innerY + 1) * 0.5) - 0.5;
+  const k = 2.15;
+  return {
+    dx: posFreq * ampX * env * pxScale * k,
+    dy: posFreqY * ampY * env * pxScale * k,
+    posFreq
+  };
+}
+function getEnv(c, r, cols, rows) {
+  const tx = cols > 1 ? c / (cols - 1) : 0.5;
+  const mode = document.getElementById('ampMode').value;
+  const ease = document.getElementById('easingType').value;
+  if (mode === 'constant') return 1;
+  if (mode === 'ease01') return applyEase(tx, ease);
+  if (mode === 'ease10') return applyEase(1 - tx, ease);
+  if (mode === 'center') return applyEase(1 - Math.abs(tx * 2 - 1), ease);
+  if (mode === 'random') return ((c * 7 + r * 13) % 17) / 16;
+  return 1;
+}
+/** Shared motion math: ampX/ampY in design units; multiply displacements by `scale` (W/cw or 1). */
+function cellDisplacement(c, r, cols, rows, tOff, nx, ny, env, ampX, ampY, scale, mode, scaleOn, scaleBase, scaleAmp, rotOn, rotAmp, brot) {
+  let dx = 0, dy = 0, ndSclBoost = 1;
+  if (mode === 'noise') {
+    dx = fbm(nx, ny + 31.41) * ampX * env * scale;
+    dy = fbm(nx + 47.12, ny + tOff * 0.7) * ampY * env * scale;
+  } else if (mode === 'curl') {
+    const cf = curl(nx, ny + tOff * 0.5);
+    dx = cf.x * ampX * env * scale * 0.8;
+    dy = cf.y * ampY * env * scale * 0.8;
+  } else if (mode === 'wave') {
+    const freqX = G.freqX, freqY = G.freqY;
+    dx = Math.sin(r * freqX * 0.35 + tOff * 6) * ampX * env * scale;
+    dy = Math.cos(c * freqY * 0.35 + tOff * 4) * ampY * env * scale;
+  } else if (mode === 'spiral') {
+    const cx2 = cols / 2, cy2 = rows / 2;
+    const angle = Math.atan2(r - cy2, c - cx2) + tOff * 2;
+    const dist = Math.sqrt((c - cx2) ** 2 + (r - cy2) ** 2) * 0.4;
+    dx = Math.cos(angle) * dist * ampX * env * scale * 0.15;
+    dy = Math.sin(angle) * dist * ampY * env * scale * 0.15;
+  } else if (mode === 'radial') {
+    const cx2 = cols / 2, cy2 = rows / 2;
+    const rx = c - cx2, ry = r - cy2;
+    const dist = Math.sqrt(rx * rx + ry * ry) + 0.001;
+    const wave = Math.sin(dist * 0.6 - tOff * 5);
+    dx = (rx / dist) * wave * ampX * env * scale;
+    dy = (ry / dist) * wave * ampY * env * scale;
+  } else if (mode === 'heart') {
+    const cx2 = cols / 2;
+    const cy2 = rows * 0.54;
+    const px = (c - cx2) / (cols * 0.32);
+    const py = -((r - cy2) / (rows * 0.32));
+    const N = 120;
+    let bestDist = 1e9, bestTx = 0, bestTy = 0;
+    for (let i = 0; i < N; i++) {
+      const theta = (i / N) * Math.PI * 2;
+      const hx = Math.pow(Math.sin(theta), 3);
+      const hy = (13 * Math.cos(theta) - 5 * Math.cos(2*theta) - 2 * Math.cos(3*theta) - Math.cos(4*theta)) / 16;
+      const d = (px - hx) * (px - hx) + (py - hy) * (py - hy);
+      if (d < bestDist) { bestDist = d; bestTx = hx; bestTy = hy; }
+    }
+    const toX = bestTx - px, toY = bestTy - py;
+    const toLen = Math.sqrt(toX * toX + toY * toY) + 0.0001;
+    const attract = Math.min(toLen * 2.5, 1.0);
+    const tangential = 1 - attract;
+    const tx2 = -toY / toLen, ty2 = toX / toLen;
+    const pulse = Math.sin(toLen * 8 - tOff * 5);
+    const attrStr = ampX * env * scale * attract * 0.7;
+    const tangStr = ampX * env * scale * tangential * 0.5;
+    const pulseStr = ampX * env * scale * 0.3 * pulse;
+    dx = (toX / toLen) * attrStr + tx2 * tangStr * Math.cos(tOff * 2) + (toX / toLen) * pulseStr;
+    dy = -(toY / toLen) * attrStr - ty2 * tangStr * Math.cos(tOff * 2) - (toY / toLen) * pulseStr;
+  } else if (mode === 'vortex') {
+    const cx2 = cols / 2, cy2 = rows / 2;
+    const rx = c - cx2, ry = r - cy2;
+    const angle = Math.atan2(ry, rx) + tOff * 2.5;
+    const dist = Math.sqrt(rx * rx + ry * ry) * 0.4;
+    dx = Math.cos(angle) * dist * ampX * env * scale * 0.15;
+    dy = Math.sin(angle) * dist * ampY * env * scale * 0.15;
+  } else if (mode === 'glitch') {
+    const pulse = Math.sin(tOff * 18 + r * 2.1) > 0.8 ? 1 : 0;
+    dx = (fbm(nx, ny) * ampX + pulse * (Math.random() - 0.5) * ampX * 3) * env * scale;
+    dy = fbm(nx + 13.7, ny + tOff) * ampY * env * scale;
+  } else if (mode === 'networkDance') {
+    const nd = networkDanceOffset(c, r, cols, rows, tOff, ampX, ampY, env, scale);
+    dx = nd.dx; dy = nd.dy;
+    ndSclBoost = 0.1 + 0.9 * (nd.posFreq + 0.5);
+  }
+  let scl = 1;
+  if (mode === 'networkDance') scl *= ndSclBoost;
+  if (scaleOn) {
+    const sv = fbm(nx + 17.3, ny + tOff * 0.3 + 5.9);
+    const s0 = Math.max(0.05, scaleBase + sv * scaleAmp);
+    scl = mode === 'networkDance' ? scl * s0 : s0;
+  }
+  let rot = brot * (Math.PI / 180);
+  if (rotOn) {
+    const rv = fbm(nx + 29.1, ny + tOff * 0.2 + 11.4);
+    rot += rv * rotAmp * (Math.PI / 180);
+  }
+  return { dx, dy, scl, rot };
+}
+
+/** Same grid row only: left→right, measured advance width, capped nudge per pair (avoids runaway dy / off-canvas). */
+function resolveLetterCollisions(ctx, cells, rows, padPx, it, wt, fontName, pitchX) {
+  if (!cells.length || padPx <= 0) return;
+  const px = Math.max(4, pitchX || 12);
+  const setFont = (cell) => {
+    ctx.font = it + ' ' + wt + ' ' + cell.fs + "px '" + fontName + "', serif";
+  };
+  const glyphW = (cell) => {
+    setFont(cell);
+    const m = ctx.measureText(cell.ch);
+    let w = m.width;
+    if (!isFinite(w) || w < 0.15) {
+      const u = [...cell.ch][0];
+      w = u && u.codePointAt(0) > 127 ? cell.fs * 0.92 : cell.fs * 0.55;
+    }
+    return Math.max(0.25, w);
+  };
+  const capNudge = px * 0.95 + padPx * 0.5;
+  for (let pass = 0; pass < 8; pass++) {
+    for (let r = 0; r < rows; r++) {
+      const row = cells.filter(o => o.r === r).sort((a, b) => (a.bx + a.dx) - (b.bx + b.dx));
+      for (let i = 1; i < row.length; i++) {
+        const prev = row[i - 1], cur = row[i];
+        const wPrev = glyphW(prev);
+        const need = prev.bx + prev.dx + wPrev + padPx - (cur.bx + cur.dx);
+        if (need > 0) cur.dx += Math.min(need, capNudge);
+      }
+    }
+  }
+}
+
+// ═══════════════ CANVAS ═══════════════
+function resizeCvs() {
+  G.cw = parseInt(document.getElementById('CW').value) || 800;
+  G.ch = parseInt(document.getElementById('CH').value) || 800;
+  CV.width = G.cw; CV.height = G.ch;
+  document.getElementById('sb-sz').textContent = G.cw + 'x' + G.ch;
+  fitZoom();
+}
+function fitZoom() {
+  const a = document.getElementById('canvas-area');
+  const aw = a.clientWidth - 40, ah = a.clientHeight - 40;
+  ZL = Math.min(aw / G.cw, ah / G.ch, 1);
+  applyZoom();
+}
+function applyZoom() {
+  CV.style.width = (G.cw * ZL) + 'px';
+  CV.style.height = (G.ch * ZL) + 'px';
+  document.getElementById('zlbl').textContent = Math.round(ZL * 100) + '%';
+  document.getElementById('sb-zoom').textContent = Math.round(ZL * 100) + '%';
+}
+function doZoom(f) { ZL = Math.max(0.08, Math.min(4, ZL * f)); applyZoom(); }
+
+// ═══════════════ FONT ═══════════════
+async function changeFont() {
+  const name = document.getElementById('fontSel').value;
+  const fv = document.getElementById('fontVar').value;
+  G.font = name; G.fvar = fv;
+  const wt = fv.replace('italic', '').replace('normal', '').trim() || '400';
+  const it = fv.includes('italic');
+  const fp = document.getElementById('fontPrev');
+  fp.style.fontFamily = "'" + name + "',serif";
+  fp.style.fontWeight = wt;
+  fp.style.fontStyle = it ? 'italic' : 'normal';
+  fp.textContent = name;
+  if (!loadedFonts.has(name)) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=' + encodeURIComponent(name) + ':ital,wght@0,' + wt + ';1,' + wt + '&display=swap';
+    document.head.appendChild(link);
+    await document.fonts.ready;
+    loadedFonts.add(name);
+  }
+}
+async function dropFont(e) { e.preventDefault(); if (e.dataTransfer.files[0]) await loadFontFileObj(e.dataTransfer.files[0]); }
+async function loadFontFile(inp) { if (inp.files[0]) await loadFontFileObj(inp.files[0]); }
+async function loadFontFileObj(file) {
+  const url = URL.createObjectURL(file);
+  const name = 'CF_' + Date.now();
+  const ff = new FontFace(name, 'url(' + url + ')');
+  document.fonts.add(await ff.load());
+  G.font = name;
+  const fp = document.getElementById('fontPrev');
+  fp.style.fontFamily = "'" + name + "',serif";
+  fp.textContent = file.name.replace(/\.[^.]+$/, '');
+  document.getElementById('fcname').textContent = 'Loaded: ' + file.name;
+}
+function switchFTab(t, btn) {
+  document.querySelectorAll('#pane-text .stab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('fgoogle').style.display = t === 'google' ? '' : 'none';
+  document.getElementById('fcustom').style.display = t === 'custom' ? '' : 'none';
+}
+
+// ═══════════════ READ UI ═══════════════
+function readUI() {
+  G.bg = document.getElementById('bgC').value;
+  G.text = document.getElementById('textVal').value || 'TEXT';
+  G.dist = document.getElementById('distMode').value;
+  G.font = document.getElementById('fontSel').value;
+  G.fvar = document.getElementById('fontVar').value;
+  G.fsize = parseFloat(document.getElementById('fsize').value);
+  G.ivX = parseInt(document.getElementById('ivX').value);
+  G.ivY = parseInt(document.getElementById('ivY').value);
+  G.color = document.getElementById('tcC').value;
+  G.altColor = document.getElementById('ac2C').value;
+  G.useAlt = document.getElementById('useAlt').checked;
+  G.opacity = parseFloat(document.getElementById('opac').value);
+  G.brot = parseInt(document.getElementById('brot').value);
+  G.mode = document.getElementById('baseMode').value;
+  G.ampMode = document.getElementById('ampMode').value;
+  G.easing = document.getElementById('easingType').value;
+  G.ampX = parseInt(document.getElementById('ampX').value);
+  G.ampY = parseInt(document.getElementById('ampY').value);
+  G.freqX = parseFloat(document.getElementById('freqX').value);
+  G.freqY = parseFloat(document.getElementById('freqY').value);
+  G.mspd = parseFloat(document.getElementById('mspd').value);
+  G.nscale = parseFloat(document.getElementById('nscale').value);
+  G.nseed = parseInt(document.getElementById('nseed').value);
+  G.scaleOn = document.getElementById('scaleOn').checked;
+  G.scaleBase = parseFloat(document.getElementById('scaleBase').value);
+  G.scaleAmp = parseFloat(document.getElementById('scaleAmp').value);
+  G.rotOn = document.getElementById('rotOn').checked;
+  G.rotAmp = parseFloat(document.getElementById('rotAmp').value);
+  G.playSpd = parseFloat(document.getElementById('playSpd').value);
+  G.animOn = document.getElementById('animOn').checked;
+  G.collisionOn = document.getElementById('collOn').checked;
+  G.collisionPad = parseFloat(document.getElementById('collPad').value);
+  G.arViz = parseFloat(document.getElementById('arViz').value);
+  G.arBlur = parseFloat(document.getElementById('arBlur').value);
+}
+function dirty() {} // noop, readUI called each frame
+
+// ═══════════════ CHARS ═══════════════
+function getChars() {
+  const t = G.text;
+  if (G.dist === 'chars') return t.split('');
+  if (G.dist === 'unique') return [...new Set(t.replace(/\s+/g, '').split(''))].filter(Boolean);
+  return t.split(/\s+/).filter(Boolean);
+}
+
+// ═══════════════ DRAW FRAME ═══════════════
+function drawFrame(t, ctx2, W, H) {
+  const scale = W / G.cw;
+  const { bg, opacity, fsize, ivX, ivY,
+    ampX, ampY, freqX, freqY, mspd, nscale, nseed,
+    mode, scaleOn, scaleBase, scaleAmp, rotOn, rotAmp, brot } = G;
+  const fv = G.fvar;
+  const wt = fv.replace('italic', '').replace('normal', '').trim() || '400';
+  const it = fv.includes('italic') ? 'italic' : 'normal';
+
+  // Audio modulations
+  const mods = getAudioMods();
+  const effAmpX = ampX * mods.ampMul;
+  const effAmpY = ampY * mods.ampMul;
+  // Mid drives speed: faster time offset when music is present
+  const tAudio = t + aMid * mods.spdMul * 0.5;
+  const effFsize = fsize * mods.sizeMul;
+  const color    = hueRotate(G.color,    mods.colorShift);
+  const altColor = hueRotate(G.altColor, mods.colorShift);
+  const useAlt   = G.useAlt;
+
+  ctx2.fillStyle = bg;
+  ctx2.fillRect(0, 0, W, H);
+
+  const chars = getChars();
+  if (!chars.length) return;
+
+  // Grid: slightly extend beyond canvas edges so all corners are filled
+  const cols = Math.ceil(G.cw / ivX) + 3;
+  const rows = Math.ceil(G.ch / ivY) + 3;
+  document.getElementById('sb-cells').textContent = 'Cells: ' + (cols * rows);
+
+  const tOff = tAudio * mspd;
+  const cells = [];
+  let idx = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const bx = (c - 0.5) * ivX * scale;
+      const by = (r - 0.5) * ivY * scale;
+      const env = getEnv(c, r, cols, rows);
+      const nx = c * freqX * (nscale * 0.04) + tOff;
+      const ny = r * freqY * (nscale * 0.04);
+
+      const disp = cellDisplacement(c, r, cols, rows, tOff, nx, ny, env, effAmpX, effAmpY, scale, mode, scaleOn, scaleBase, scaleAmp, rotOn, rotAmp, brot);
+      const dx = disp.dx, dy = disp.dy, scl = disp.scl, rot = disp.rot;
+
+      const ch = chars[idx % chars.length];
+      const ord = idx;
+      idx++;
+      const fs = effFsize * scale * scl;
+      cells.push({ r, c, bx, by, dx, dy, scl, rot, ch, fs, nx, ny, ord });
+    }
+  }
+  const padPx = G.collisionOn ? Math.max(0, G.collisionPad) * scale : 0;
+  if (padPx > 0) resolveLetterCollisions(ctx2, cells, rows, padPx, it, wt, G.font, G.ivX * scale);
+  for (let ci = 0; ci < cells.length; ci++) {
+    const o = cells[ci];
+    ctx2.save();
+    ctx2.translate(o.bx + o.dx, o.by + o.dy);
+    if (o.rot !== 0) ctx2.rotate(o.rot);
+    ctx2.font = it + ' ' + wt + ' ' + o.fs + "px '" + G.font + "', serif";
+    ctx2.globalAlpha = opacity;
+    ctx2.fillStyle = (useAlt && ((o.ord + 1) % 3 === 0)) ? altColor : color;
+    ctx2.fillText(o.ch, 0, 0);
+    ctx2.restore();
+  }
+}
+
+// ═══════════════ AUDIO REACTIVE ENGINE ═══════════════
+let audioCtx = null, analyser = null, dataArr = null, micStream = null;
+let audioActive = false;
+let aBass = 0, aMid = 0, aHigh = 0; // smoothed 0..1 values
+let aBassPeak = 0, aMidPeak = 0, aHighPeak = 0; // auto-gain tracking
+let vizBars = { n: 0, smooth: null, peaks: null, blend: null };
+
+async function toggleAudio() {
+  if (audioActive) {
+    stopAudio();
+  } else {
+    await startAudio();
+  }
+}
+
+async function startAudio() {
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(micStream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 1024;
+    analyser.smoothingTimeConstant = 0.78;
+    source.connect(analyser);
+    dataArr = new Uint8Array(analyser.frequencyBinCount);
+    audioActive = true;
+    document.getElementById('audioBtn').textContent = '⏹ Disable Audio';
+    document.getElementById('audioBtn').style.background = '#ff4455';
+    document.getElementById('audioBtn').style.borderColor = '#ff4455';
+    document.getElementById('audioViz').style.display = '';
+  } catch (e) {
+    alert('Microphone access denied or unavailable: ' + e.message);
+  }
+}
+
+function stopAudio() {
+  if (micStream) micStream.getTracks().forEach(t => t.stop());
+  if (audioCtx) audioCtx.close();
+  audioCtx = null; analyser = null; dataArr = null; micStream = null;
+  audioActive = false;
+  aBass = 0; aMid = 0; aHigh = 0;
+  vizBars = { n: 0, smooth: null, peaks: null, blend: null };
+  document.getElementById('audioBtn').textContent = '🎤 Enable Microphone';
+  document.getElementById('audioBtn').style.background = '';
+  document.getElementById('audioBtn').style.borderColor = '';
+  document.getElementById('audioViz').style.display = 'none';
+}
+
+function updateAudio() {
+  if (!audioActive || !analyser) return;
+  analyser.getByteFrequencyData(dataArr);
+  const bins = dataArr.length;
+  const sr = audioCtx.sampleRate;
+  const binHz = sr / (analyser.fftSize);
+  const sens = parseFloat(document.getElementById('arSens').value);
+  const smooth = parseFloat(document.getElementById('arSmooth').value);
+
+  // Frequency band ranges (bin indices)
+  // Bass: 20–250 Hz, Mid: 250–4000 Hz, High: 4000–20000 Hz
+  function avg(loHz, hiHz) {
+    const lo = Math.floor(loHz / binHz);
+    const hi = Math.min(Math.ceil(hiHz / binHz), bins - 1);
+    let sum = 0, count = 0;
+    for (let i = lo; i <= hi; i++) { sum += dataArr[i]; count++; }
+    return count > 0 ? sum / count / 255 : 0;
+  }
+
+  const rawBass = avg(20, 250);
+  const rawMid  = avg(250, 4000);
+  const rawHigh = avg(4000, 16000);
+
+  // Auto-gain: track peak with slow decay
+  aBassPeak = Math.max(aBassPeak * 0.998, rawBass + 0.01);
+  aMidPeak  = Math.max(aMidPeak  * 0.998, rawMid  + 0.01);
+  aHighPeak = Math.max(aHighPeak * 0.998, rawHigh + 0.01);
+
+  // Normalize to 0..1 with sensitivity boost
+  const nb = Math.min((rawBass / aBassPeak) * sens, 1);
+  const nm = Math.min((rawMid  / aMidPeak)  * sens, 1);
+  const nh = Math.min((rawHigh / aHighPeak) * sens, 1);
+
+  // Smooth
+  aBass = aBass * smooth + nb * (1 - smooth);
+  aMid  = aMid  * smooth + nm * (1 - smooth);
+  aHigh = aHigh * smooth + nh * (1 - smooth);
+
+  // Update display
+  document.getElementById('bassVal').textContent = Math.round(aBass * 100);
+  document.getElementById('midVal').textContent  = Math.round(aMid  * 100);
+  document.getElementById('highVal').textContent = Math.round(aHigh * 100);
+  const bBar = document.getElementById('bassBar');
+  const mBar = document.getElementById('midBar');
+  const hBar = document.getElementById('highBar');
+  if (bBar) bBar.style.width = Math.round(aBass * 100) + '%';
+  if (mBar) mBar.style.width = Math.round(aMid  * 100) + '%';
+  if (hBar) hBar.style.width = Math.round(aHigh * 100) + '%';
+
+  // Spectrum canvas — log-spaced bands, rounded bars, peak line
+  const viz = document.getElementById('vizCv');
+  const vc = viz.getContext('2d');
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const wrap = viz.parentElement;
+  const cwPx = wrap && wrap.clientWidth > 8 ? wrap.clientWidth : 248;
+  const tw = Math.max(200, Math.floor(cwPx * dpr));
+  const th = Math.floor(52 * dpr);
+  if (viz.width !== tw || viz.height !== th) { viz.width = tw; viz.height = th; }
+  const vw = viz.width, vh = viz.height;
+  const fft = analyser.fftSize;
+  const nBars = Math.max(40, Math.min(90, Math.floor(vw / (3.2 * dpr))));
+  if (vizBars.n !== nBars || !vizBars.smooth) {
+    vizBars.n = nBars;
+    vizBars.smooth = new Float32Array(nBars);
+    vizBars.peaks = new Float32Array(nBars);
+    vizBars.blend = new Float32Array(nBars);
+  }
+  const sm = vizBars.smooth, pk = vizBars.peaks, bl = vizBars.blend;
+  const vInertia = parseFloat(document.getElementById('arViz').value);
+  const blurMix = parseFloat(document.getElementById('arBlur').value);
+  const padX = 5 * dpr, padB = 6 * dpr, padT = 7 * dpr;
+  const innerW = vw - padX * 2;
+  const barGap = Math.max(0.5 * dpr, innerW / nBars * 0.14);
+  const barW = innerW / nBars - barGap;
+  const hzMax = 12000;
+
+  const g0 = vc.createLinearGradient(0, 0, 0, vh);
+  g0.addColorStop(0, '#16161f');
+  g0.addColorStop(1, '#0b0b10');
+  vc.fillStyle = g0;
+  vc.fillRect(0, 0, vw, vh);
+  const glow = vc.createRadialGradient(vw * 0.5, vh * 1.15, 0, vw * 0.5, vh * 1.15, vw * 0.85);
+  glow.addColorStop(0, 'rgba(77,166,255,0.12)');
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  vc.fillStyle = glow;
+  vc.fillRect(0, 0, vw, vh);
+
+  for (let i = 0; i < nBars; i++) {
+    const t0 = i / nBars, t1 = (i + 1) / nBars;
+    const loHz = 20 * Math.pow(hzMax / 20, t0);
+    const hiHz = 20 * Math.pow(hzMax / 20, t1);
+    const b0 = Math.floor(loHz * fft / sr);
+    const b1 = Math.min(bins - 1, Math.ceil(hiHz * fft / sr));
+    let sum = 0, cnt = 0;
+    for (let b = b0; b <= b1; b++) { sum += dataArr[b]; cnt++; }
+    const raw = cnt ? sum / cnt / 255 : 0;
+    sm[i] = sm[i] * vInertia + raw * (1 - vInertia);
+  }
+  for (let i = 0; i < nBars; i++) {
+    const lm = i > 0 ? sm[i - 1] : sm[i];
+    const rm = i < nBars - 1 ? sm[i + 1] : sm[i];
+    bl[i] = sm[i] * (1 - blurMix) + blurMix * 0.5 * (lm + rm);
+  }
+  for (let i = 0; i < nBars; i++) {
+    const t0 = i / nBars;
+    const v = Math.pow(Math.max(0, Math.min(1, bl[i])), 0.4);
+    pk[i] = Math.max(pk[i] * 0.97, v);
+    const x = padX + i * (barW + barGap);
+    const maxH = vh - padT - padB;
+    const h = Math.max(1.2 * dpr, v * maxH);
+    const y = vh - padB - h;
+    const hue = 268 - t0 * 118;
+    const sat = 72 + v * 22;
+    const lit = 38 + v * 32;
+    const base = 'hsla(' + hue.toFixed(1) + ',' + sat.toFixed(0) + '%,' + lit.toFixed(0) + '%,';
+    const lg = vc.createLinearGradient(0, y, 0, vh - padB);
+    lg.addColorStop(0, base + '0.95)');
+    lg.addColorStop(0.55, base + '0.75)');
+    lg.addColorStop(1, base + '0.35)');
+    vc.fillStyle = lg;
+    const rad = Math.min(barW * 0.45, 3 * dpr);
+    if (vc.roundRect) {
+      vc.beginPath();
+      vc.roundRect(x, y, barW, h, rad);
+      vc.fill();
+    } else {
+      vc.fillRect(x, y, barW, h);
+    }
+    vc.fillStyle = 'rgba(255,255,255,' + (0.06 + v * 0.18) + ')';
+    vc.fillRect(x, y, barW, Math.min(2 * dpr, h * 0.15));
+    const ph = Math.max(1 * dpr, pk[i] * maxH);
+    const py = vh - padB - ph;
+    vc.fillStyle = 'rgba(255,255,255,' + (0.25 + pk[i] * 0.35) + ')';
+    vc.fillRect(x + barW * 0.35, py - 0.5 * dpr, barW * 0.3, 1.2 * dpr);
+  }
+}
+
+// Audio modulation applied in drawFrame via these multipliers
+// Returns {ampMul, spdMul, sizeMul, colorShift}
+function getAudioMods() {
+  if (!audioActive) return { ampMul: 1, spdMul: 1, sizeMul: 1, colorShift: 0 };
+  const arAmp   = document.getElementById('arAmp').checked;
+  const arSpd   = document.getElementById('arSpd').checked;
+  const arSize  = document.getElementById('arSize').checked;
+  const arColor = document.getElementById('arColor').checked;
+  return {
+    ampMul:    arAmp   ? 1 + aBass * 2.1   : 1,
+    spdMul:    arSpd   ? 1 + aMid  * 1.35  : 1,
+    sizeMul:   arSize  ? 1 + aHigh * 0.85  : 1,
+    colorShift: arColor ? aBass * 120      : 0,
+  };
+}
+
+// Hue-rotate a hex color by degrees
+function hueRotate(hex, deg) {
+  if (!deg) return hex;
+  // Parse hex
+  const r = parseInt(hex.slice(1,3),16)/255;
+  const g = parseInt(hex.slice(3,5),16)/255;
+  const b = parseInt(hex.slice(5,7),16)/255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b), d = max - min;
+  let h = 0, s = max ? d/max : 0, v = max;
+  if (d) {
+    if (max===r) h = ((g-b)/d + (g<b?6:0))/6;
+    else if (max===g) h = ((b-r)/d + 2)/6;
+    else h = ((r-g)/d + 4)/6;
+  }
+  h = (h + deg/360) % 1;
+  if (h < 0) h += 1;
+  const i = Math.floor(h*6), f = h*6-i, p=v*(1-s), q=v*(1-f*s), t2=v*(1-(1-f)*s);
+  let ro,go,bo;
+  switch(i%6){case 0:ro=v;go=t2;bo=p;break;case 1:ro=q;go=v;bo=p;break;case 2:ro=p;go=v;bo=t2;break;case 3:ro=p;go=q;bo=v;break;case 4:ro=t2;go=p;bo=v;break;default:ro=v;go=p;bo=q;}
+  return '#'+[ro,go,bo].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join('');
+}
+
+// ═══════════════ LOOP ═══════════════
+let fpsCnt = 0, fpsAcc = 0;
+function loop(ts) {
+  if (!lastTS) lastTS = ts;
+  const dt = Math.min((ts - lastTS) / 1000, 0.05);
+  lastTS = ts;
+  readUI();
+  updateAudio();
+  if (G.animOn) T += dt * G.playSpd;
+  seedP(G.nseed);
+  drawFrame(T, cx, G.cw, G.ch);
+  document.getElementById('sb-t').textContent = 't: ' + T.toFixed(2) + 's';
+  fpsCnt++; fpsAcc += dt;
+  if (fpsAcc >= 0.6) {
+    document.getElementById('fps-disp').textContent = Math.round(fpsCnt / fpsAcc) + ' fps';
+    fpsCnt = 0; fpsAcc = 0;
+  }
+  requestAnimationFrame(loop);
+}
+
+// ═══════════════ SVG EXPORT ═══════════════
+function exportSVG() {
+  readUI(); seedP(G.nseed);
+  const { cw, ch, bg, color, altColor, useAlt, opacity, fsize, ivX, ivY,
+    ampX, ampY, freqX, freqY, mspd, nscale, nseed, mode,
+    scaleOn, scaleBase, scaleAmp, rotOn, rotAmp, brot } = G;
+  const fv = G.fvar;
+  const wt = fv.replace('italic', '').replace('normal', '').trim() || '400';
+  const it = fv.includes('italic') ? 'italic' : 'normal';
+  const cols = Math.ceil(cw / ivX) + 3;
+  const rows = Math.ceil(ch / ivY) + 3;
+  const chars = getChars(); if (!chars.length) return;
+  const tOff = T * mspd;
+  const cells = [];
+  let idx = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const bx = (c - 0.5) * ivX, by = (r - 0.5) * ivY;
+      const env = getEnv(c, r, cols, rows);
+      const nx = c * freqX * (nscale * 0.04) + tOff;
+      const ny = r * freqY * (nscale * 0.04);
+      const disp = cellDisplacement(c, r, cols, rows, tOff, nx, ny, env, ampX, ampY, 1, mode, scaleOn, scaleBase, scaleAmp, rotOn, rotAmp, brot);
+      const ch = chars[idx % chars.length];
+      const ord = idx;
+      idx++;
+      const fs = fsize * disp.scl;
+      cells.push({ r, c, bx, by, dx: disp.dx, dy: disp.dy, scl: disp.scl, rot: disp.rot, ch, fs, ord });
+    }
+  }
+  const padPx = G.collisionOn ? Math.max(0, G.collisionPad) : 0;
+  if (padPx > 0) resolveLetterCollisions(cx, cells, rows, padPx, it, wt, G.font, G.ivX);
+  let els = '';
+  for (let ci = 0; ci < cells.length; ci++) {
+    const o = cells[ci];
+    const x = (o.bx + o.dx).toFixed(1), y = (o.by + o.dy).toFixed(1);
+    const fs = o.fs.toFixed(2);
+    const fill = (useAlt && ((o.ord + 1) % 3 === 0)) ? altColor : color;
+    const tr = o.rot ? ' transform="rotate(' + (o.rot * 180 / Math.PI).toFixed(1) + ',' + x + ',' + y + ')"' : '';
+    els += '<text x="' + x + '" y="' + y + '" font-size="' + fs + '" fill="' + fill + '" opacity="' + opacity + '" font-family="' + G.font + '" font-weight="' + wt + '" font-style="' + it + '"' + tr + '>' + o.ch.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</text>\n';
+  }
+  const gf = 'https://fonts.googleapis.com/css2?family=' + encodeURIComponent(G.font) + ':ital,wght@0,' + wt + ';1,' + wt + '&display=swap';
+  const svg = '<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + cw + ' ' + ch + '" width="' + cw + '" height="' + ch + '">\n<defs><style>@import url(\'' + gf + '\');</style></defs>\n<rect width="' + cw + '" height="' + ch + '" fill="' + bg + '"/>\n' + els + '</svg>';
+  dl(new Blob([svg], { type: 'image/svg+xml' }), 'textr-export.svg');
+}
+
+// ═══════════════ EXPORT VIDEO/FRAMES ═══════════════
+let exporting = false;
+async function startExport() {
+  if (exporting) return;
+  exporting = true;
+  readUI();
+  const btn = document.getElementById('expBtn');
+  const bar = document.getElementById('expBar');
+  const fill = document.getElementById('expFill');
+  const log = document.getElementById('elog');
+  btn.disabled = true; btn.textContent = 'Exporting...';
+  bar.style.display = 'block';
+  const dur = parseInt(document.getElementById('exDur').value);
+  const fps = parseInt(document.getElementById('exFps').value);
+  const res = parseInt(document.getElementById('exRes').value);
+  const fmt = document.getElementById('exFmt').value;
+  const total = dur * fps;
+  const offCv = document.createElement('canvas');
+  offCv.width = res; offCv.height = res;
+  const offCtx = offCv.getContext('2d');
+  const tStart = T;
+  function setLog(s) { log.textContent = s; }
+  function setProg(n) { fill.style.width = Math.round(n * 100) + '%'; }
+  function done() { btn.disabled = false; btn.textContent = 'Start Export'; exporting = false; }
+
+  if (fmt === 'webm') {
+    let stream, recorder, chunks = [];
+    try { stream = offCv.captureStream(fps); } catch (e) { setLog('captureStream not available'); done(); return; }
+    const mimes = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+    const mime = mimes.find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
+    recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 12000000 });
+    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+    recorder.onstop = () => {
+      dl(new Blob(chunks, { type: mime }), 'textr-export.webm');
+      setLog('Done! Convert to MP4: ffmpeg -i textr-export.webm output.mp4');
+      done();
+    };
+    recorder.start();
+    for (let f = 0; f < total; f++) {
+      seedP(G.nseed);
+      drawFrame(tStart + (f / fps) * G.playSpd, offCtx, res, res);
+      setProg(f / total);
+      setLog('Frame ' + (f + 1) + '/' + total);
+      await new Promise(r => setTimeout(r, 1000 / fps));
+    }
+    recorder.stop();
+  } else {
+    const ext = fmt === 'webp' ? 'webp' : 'png';
+    const mime2 = fmt === 'webp' ? 'image/webp' : 'image/png';
+    if (!window.JSZip) {
+      const sc = document.createElement('script');
+      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      document.head.appendChild(sc);
+      await new Promise((res, rej) => { sc.onload = res; sc.onerror = rej; });
+    }
+    const zip = new window.JSZip();
+    for (let f = 0; f < total; f++) {
+      seedP(G.nseed);
+      drawFrame(tStart + (f / fps) * G.playSpd, offCtx, res, res);
+      setProg(f / total);
+      setLog('Encoding ' + (f + 1) + '/' + total);
+      zip.file('frame_' + String(f).padStart(5, '0') + '.' + ext, offCv.toDataURL(mime2, 0.92).split(',')[1], { base64: true });
+      await new Promise(r => setTimeout(r, 0));
+    }
+    setLog('Zipping...');
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 1 } }, m => setProg(m.percent / 100));
+    dl(blob, 'textr-frames.zip');
+    setLog('Done! FFmpeg: ffmpeg -r ' + fps + ' -i frame_%05d.' + ext + ' output.mp4');
+    done();
+  }
+}
+
+function dl(blob, name) {
+  const u = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = u; a.download = name; a.click();
+  URL.revokeObjectURL(u);
+}
+
+// ═══════════════ PRESETS ═══════════════
+const PRESETS = {
+  echo:   { bg:'#f5f0e8', text:'LOVE IN THE MOOD', dist:'words', font:'Tomorrow', fvar:'500italic', fsize:10, ivX:36, ivY:36, color:'#0006ff', useAlt:false, mode:'noise', ampMode:'ease01', easing:'circ', ampX:29, ampY:29, freqX:1, freqY:1, mspd:0.04, nscale:3, nseed:248, scaleOn:false, scaleBase:1, scaleAmp:0.5, rotOn:false, rotAmp:30 },
+  heart:  { bg:'#fff0f3', text:'LOVE', dist:'chars', font:'Tomorrow', fvar:'700italic', fsize:10, ivX:26, ivY:26, color:'#ff0055', useAlt:true, altColor:'#ff88aa', mode:'heart', ampMode:'constant', easing:'circ', ampX:55, ampY:55, freqX:1, freqY:1, mspd:0.06, nscale:3, nseed:100, scaleOn:false, scaleBase:1, scaleAmp:0.5, rotOn:false, rotAmp:30 },
+  storm:  { bg:'#0a0a18', text:'STORM', dist:'words', font:'Bebas Neue', fvar:'400normal', fsize:9, ivX:16, ivY:16, color:'#ffffff', useAlt:false, mode:'wave', ampMode:'ease01', easing:'sine', ampX:50, ampY:18, freqX:2, freqY:1, mspd:0.09, nscale:3, nseed:42, scaleOn:false, scaleBase:1, scaleAmp:0.5, rotOn:false, rotAmp:30 },
+  bloom:  { bg:'#f0efe8', text:'BLOOM GROW RISE', dist:'words', font:'Playfair Display', fvar:'700italic', fsize:6, ivX:20, ivY:20, color:'#2d5a27', useAlt:false, mode:'curl', ampMode:'center', easing:'sine', ampX:35, ampY:35, freqX:1.5, freqY:1.5, mspd:0.03, nscale:4, nseed:100, scaleOn:false, scaleBase:1, scaleAmp:0.5, rotOn:false, rotAmp:30 },
+  ocean:  { bg:'#e8f4ff', text:'OCEAN DEEP', dist:'words', font:'Montserrat', fvar:'400normal', fsize:5, ivX:24, ivY:24, color:'#0055aa', useAlt:false, mode:'wave', ampMode:'ease01', easing:'sine', ampX:18, ampY:40, freqX:0.8, freqY:1.2, mspd:0.06, nscale:3, nseed:77, scaleOn:false, scaleBase:1, scaleAmp:0.5, rotOn:false, rotAmp:30 },
+  glitch: { bg:'#000000', text:'ERROR 404', dist:'chars', font:'Fira Code', fvar:'700normal', fsize:7, ivX:20, ivY:20, color:'#00ff88', useAlt:true, altColor:'#ff0044', mode:'glitch', ampMode:'random', easing:'linear', ampX:60, ampY:10, freqX:3, freqY:1, mspd:0.12, nscale:3, nseed:333, scaleOn:false, scaleBase:1, scaleAmp:0.5, rotOn:false, rotAmp:30 },
+  radial: { bg:'#fff8f0', text:'BURST OUT', dist:'words', font:'Anton', fvar:'400normal', fsize:6, ivX:19, ivY:19, color:'#cc2200', useAlt:false, mode:'radial', ampMode:'center', easing:'circ', ampX:38, ampY:38, freqX:2, freqY:2, mspd:0.05, nscale:3, nseed:555, scaleOn:false, scaleBase:1, scaleAmp:0.5, rotOn:false, rotAmp:30 },
+  networkDance: { bg:'#d6dbce', text:'NETWORKDANCE', dist:'chars', font:'Mona Sans', fvar:'500italic', fsize:7.3, ivX:22, ivY:22, color:'#090909', useAlt:false, mode:'networkDance', ampMode:'constant', easing:'circ', ampX:40, ampY:34, freqX:1, freqY:1, mspd:0.05, nscale:3, nseed:284, scaleOn:false, scaleBase:1, scaleAmp:0.5, rotOn:false, rotAmp:30 },
+};
+
+function applyPreset(name) {
+  const p = PRESETS[name]; if (!p) return;
+  Object.assign(G, p);
+  writeUI();
+  if (!loadedFonts.has(G.font)) {
+    const wt = G.fvar.replace('italic', '').replace('normal', '').trim() || '400';
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=' + encodeURIComponent(G.font) + ':ital,wght@0,' + wt + ';1,' + wt + '&display=swap';
+    document.head.appendChild(link);
+    loadedFonts.add(G.font);
+  }
+  seedP(G.nseed);
+}
+
+function writeUI() {
+  function set(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
+  function setChk(id, v) { const el = document.getElementById(id); if (el) el.checked = !!v; }
+  function setSR(id, v, vid) { set(id, v); const el = document.getElementById(vid); if (el) el.textContent = String(parseFloat(v)).replace(/^(\d+\.\d*?)0+$/, '$1').replace(/\.$/, ''); }
+  set('bgC', G.bg); set('bgHex', G.bg); syncColor('bgC', 'bgHex', 'bgSw');
+  set('textVal', G.text); set('distMode', G.dist);
+  set('fontSel', G.font); set('fontVar', G.fvar);
+  setSR('fsize', G.fsize, 'fsizeV'); setSR('ivX', G.ivX, 'ivXV'); setSR('ivY', G.ivY, 'ivYV');
+  set('tcC', G.color); set('tcHex', G.color); syncColor('tcC', 'tcHex', 'tcSw');
+  setChk('useAlt', G.useAlt);
+  setSR('opac', G.opacity, 'opacV'); setSR('brot', G.brot, 'brotV');
+  set('baseMode', G.mode); set('ampMode', G.ampMode); set('easingType', G.easing || 'circ');
+  setSR('ampX', G.ampX, 'ampXV'); setSR('ampY', G.ampY, 'ampYV');
+  setSR('freqX', G.freqX, 'freqXV'); setSR('freqY', G.freqY, 'freqYV');
+  setSR('mspd', G.mspd, 'mspdV'); setSR('nscale', G.nscale, 'nscaleV'); setSR('nseed', G.nseed, 'nseedV');
+  setChk('scaleOn', G.scaleOn); setSR('scaleBase', G.scaleBase, 'scaleBV'); setSR('scaleAmp', G.scaleAmp, 'scaleAV');
+  setChk('rotOn', G.rotOn); setSR('rotAmp', G.rotAmp, 'rotAmpV');
+  setChk('collOn', G.collisionOn ?? false);
+  setSR('collPad', G.collisionPad != null ? G.collisionPad : 2, 'collPadV');
+  setSR('arViz', G.arViz != null ? G.arViz : 0.9, 'arVizV');
+  setSR('arBlur', G.arBlur != null ? G.arBlur : 0.35, 'arBlurV');
+}
+
+function savePreset() {
+  readUI();
+  dl(new Blob([JSON.stringify(G, null, 2)], { type: 'application/json' }), 'textr-preset.json');
+}
+function loadPresetFile(inp) {
+  const file = inp.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try { Object.assign(G, JSON.parse(e.target.result)); writeUI(); seedP(G.nseed); }
+    catch (ex) { alert('Invalid preset file'); }
+  };
+  reader.readAsText(file);
+}
+function newProject() { applyPreset('echo'); T = 0; }
+
+// ═══════════════ UI HELPERS ═══════════════
+function sv(el, vid) {
+  const v = document.getElementById(vid);
+  if (v) v.textContent = String(parseFloat(el.value)).replace(/^(\d+\.\d*?)0+$/, '$1').replace(/\.$/, '');
+}
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.pane').forEach(p => p.style.display = 'none');
+  document.getElementById('pane-' + name).style.display = '';
+}
+function goExport() {
+  document.querySelectorAll('.tab').forEach((b, i, a) => { b.classList.remove('on'); if (i === a.length - 1) b.classList.add('on'); });
+  document.querySelectorAll('.pane').forEach(p => p.style.display = 'none');
+  document.getElementById('pane-export').style.display = '';
+}
+function syncColor(cid, hid, swid) {
+  const v = document.getElementById(cid).value;
+  document.getElementById(hid).value = v;
+  document.getElementById(swid).style.background = v;
+}
+function hexToColor(hid, cid, swid) {
+  const v = document.getElementById(hid).value;
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) { document.getElementById(cid).value = v; document.getElementById(swid).style.background = v; }
+}
+document.getElementById('tcC').addEventListener('input', function () { document.getElementById('tcHex').value = this.value; });
+document.getElementById('ac2C').addEventListener('input', function () { document.getElementById('ac2Hex').value = this.value; });
+
+// ═══════════════ INIT ═══════════════
+CV.width = 800; CV.height = 800;
+seedP(248);
+fitZoom();
+applyPreset('echo');
+requestAnimationFrame(loop);
+new ResizeObserver(() => fitZoom()).observe(document.getElementById('canvas-area'));
+</script>
+</body>
+</html>
